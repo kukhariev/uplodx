@@ -70,9 +70,10 @@ export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
    */
   async write(part: FilePart): Promise<DiskFile> {
     const file = await this._getMeta(part.name);
-    if (file.status === 'completed') return file;
+    if (file.status === 'completed' || file.lockedBy) return file;
     if (!isValidPart(part, file)) return fail(ERRORS.FILE_CONFLICT);
     try {
+      this.lock(file.name, part.contentLength);
       file.bytesWritten = await this._write({ ...file, ...part });
       if (file.bytesWritten === INVALID_OFFSET) return fail(ERRORS.FILE_CONFLICT);
       if (isCompleted(file)) {
@@ -81,6 +82,8 @@ export class DiskStorage extends BaseStorage<DiskFile, DiskListObject> {
       return file;
     } catch (err) {
       return fail(ERRORS.FILE_ERROR, err);
+    } finally {
+      this.unlock(file.name);
     }
   }
 
