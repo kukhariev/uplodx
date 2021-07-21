@@ -36,6 +36,7 @@ export class File implements FileInit {
   size;
   status?: UploadEventType;
   userId?;
+  lockedBy?: unknown;
 
   constructor({ metadata = {}, originalName, contentType, size, userId }: FileInit) {
     this.metadata = metadata;
